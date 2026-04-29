@@ -1,14 +1,14 @@
 const button = document.getElementById('btn');
 const resultText = document.getElementById('result');
 
-function getRandomColorValue() {
+function getRandomValue() {
     return Math.floor(Math.random() * 256);
 }
 
 function getRandomRGB() {
-    const r = getRandomColorValue();
-    const g = getRandomColorValue();
-    const b = getRandomColorValue();
+    const r = getRandomValue();
+    const g = getRandomValue();
+    const b = getRandomValue();
     return { r, g, b };
 }
 
