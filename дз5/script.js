@@ -29,8 +29,8 @@ for (let i = 0; i < quiz.length; i++) {
     correctAnswersCount++;
     alert("Правильно!");
   } else {
-    alert(`Неправильно. Правильный ответ: ${item.correct}`);
+    alert(`Правильный ответ: ${item.correct}`);
   }
 }
 
-alert(`Игра окончена! Вы ответили правильно на ${correctAnswersCount} из ${quiz.length} вопросов.`)
+alert(`Количество правильных ответов: ${correctAnswersCount} из ${quiz.length}.`)
