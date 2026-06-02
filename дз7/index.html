@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Менеджер задач</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+    .input-row { display: flex; gap: 8px; margin-bottom: 20px; }
+    input { flex: 1; padding: 8px; font-size: 16px; }
+    button { padding: 8px 16px; cursor: pointer; }
+    .task {
+      padding: 12px; border: 1px solid #ddd; border-radius: 6px;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+    }
+    .task.done { opacity: 0.5; text-decoration: line-through; }
+    .task-text { flex: 1; cursor: pointer; }
+    .stats { padding: 10px; background: #f0f0f0; border-radius: 6px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Менеджер задач</h1>
+ 
+  <div class="input-row">
+    <input type="text" id="taskInput" placeholder="Что нужно сделать?">
+    <button id="addBtn">Добавить</button>
+  </div>
+ 
+  <div class="stats" id="stats"></div>
+  <div id="tasksList"></div>
+ 
+  <script>
+    function createTaskManager() {
+        let tasks = [];return {
+                addTask(text) {
+                    const newTask = {
+                        id: Date.now(),
+                        text: text,
+                        done: false
+                    };
+                    tasks.push(newTask);
+                },
+                
+                removeTask(id) {
+                    tasks = tasks.filter(task => task.id !== id);
+                },
+                
+                toggleTask(id) {
+                    tasks = tasks.map(task => {
+                        if (task.id === id) {
+                            return { ...task, done: !task.done };
+                        }
+                        return task;
+                    });
+                },
+
+                getAll() {
+                    return [...tasks];
+                },
+
+                getStats() {
+                    const total = tasks.length;
+                    const active = tasks.filter(task => !task.done).length;
+                    const completed = tasks.filter(task => task.done).length;
+                    return { total, active, completed };
+                }
+            };
+        }
+
+ 
+        const app = {
+            manager: createTaskManager(),
+
+            init() {
+                this.addButton = document.getElementById('addBtn');
+                this.taskInput = document.getElementById('taskInput');
+                this.tasksList = document.getElementById('tasksList');
+                this.statsDiv = document.getElementById('stats');
+
+                this.addButton.addEventListener('click', () => {
+                    this.addTaskHandler();
+                });
+                
+                this.taskInput.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter' || event.keyCode === 13) { // добавление через энтер
+                        this.addTaskHandler();
+                    }
+                });
+                
+                this.loadFromLocalStorage();
+                
+                this.render();
+            },
+            
+            addTaskHandler() {
+                const taskText = this.taskInput.value.trim();
+                
+                if (taskText === '') {
+                    alert('задача не может быть пустой'); //чтоб нельзя было ввести пустую задачу
+                    return;
+                }
+                
+                this.manager.addTask(taskText);
+                
+                this.taskInput.value = ''; //чтоб поле ввода сбрасывалось
+                
+                this.saveToLocalStorage();
+                
+                this.render();
+            },
+            
+            render() {
+                const tasks = this.manager.getAll();
+                
+                this.tasksList.innerHTML = '';
+
+                tasks.forEach(task => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task';
+                    
+                    if (task.done) {
+                        taskDiv.classList.add('done');
+                    }
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = task.done;
+
+                    checkbox.addEventListener('change', () => {
+                        this.manager.toggleTask(task.id);
+                        this.saveToLocalStorage();
+                        this.render();
+                    });
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'task-text';
+                    textSpan.textContent = task.text;
+                    
+                    textSpan.addEventListener('click', () => {
+                        this.manager.toggleTask(task.id);
+                        this.saveToLocalStorage();
+                        this.render();
+                    });
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'удалить';
+                    deleteBtn.style.background = '#ff4444';
+                    deleteBtn.style.color = 'white';
+                    deleteBtn.style.border = 'none';
+                    deleteBtn.style.borderRadius = '4px';
+                    deleteBtn.style.cursor = 'pointer';
+                    deleteBtn.style.padding = '4px 8px';
+
+                    deleteBtn.addEventListener('click', () => {
+                        this.manager.removeTask(task.id);
+                        this.saveToLocalStorage();
+                        this.render();
+                    });
+                    
+                    taskDiv.appendChild(checkbox);
+                    taskDiv.appendChild(textSpan);
+                    taskDiv.appendChild(deleteBtn);
+                    
+                    this.tasksList.appendChild(taskDiv);
+                });
+                
+                this.updateStats();
+            },
+
+            updateStats() {
+                const stats = this.manager.getStats();
+                this.statsDiv.innerHTML = `
+                    всего задач: ${stats.total} | 
+                    выполнено: ${stats.completed} | 
+                    активных: ${stats.active}
+                `;
+            },
+
+            //локал сторэдж:
+            
+            saveToLocalStorage() {
+                const tasks = this.manager.getAll();
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            },
+
+            loadFromLocalStorage() {
+                const savedTasks = localStorage.getItem('tasks');
+                if (savedTasks) {
+                    const tasks = JSON.parse(savedTasks);
+
+                    tasks.forEach(task => {
+                        this.manager.addTask(task.text);
+                        if (task.done) {
+                            const allTasks = this.manager.getAll();
+                            const lastTask = allTasks[allTasks.length - 1];
+                            this.manager.toggleTask(lastTask.id);
+                        }
+                    });
+                }
+            }
+        };
+
+        app.init();
+  </script>
+</body>
+</html>
